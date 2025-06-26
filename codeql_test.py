@@ -1,39 +1,33 @@
 import os
 import sqlite3
+from flask import Flask, request
 
-# 하드코딩된 비밀번호 (Hardcoded credentials)
-DB_PASSWORD = "supersecret123"  # CodeQL: hardcoded-credentials
+app = Flask(__name__)
 
-def execute_command(user_input):
-    # OS 명령어 삽입 취약점 (Command Injection)
-    os.system("ping " + user_input)  # CodeQL: command-injection
+# 🔒 1. 명령어 삽입 취약점 (Command Injection)
+@app.route('/ping', methods=['GET'])
+def ping():
+    ip = request.args.get('ip', '')
+    os.system("ping -c 3 " + ip)  # CodeQL: command-injection
+    return "Pinged " + ip
 
-def login(username, password):
-    if password == DB_PASSWORD:
-        print("Access granted")
-    else:
-        print("Access denied")
-
-def search_user(user_input):
-    conn = sqlite3.connect('example.db')
+# 🔒 2. SQL 삽입 취약점 (SQL Injection)
+@app.route('/search', methods=['GET'])
+def search():
+    keyword = request.args.get('q', '')
+    conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-
-    # SQL Injection
-    query = f"SELECT * FROM users WHERE name = '{user_input}'"  # CodeQL: sql-injection
+    query = "SELECT * FROM users WHERE name = '%s'" % keyword  # CodeQL: sql-injection
     cursor.execute(query)
-
-    for row in cursor.fetchall():
-        print(row)
-
+    results = cursor.fetchall()
     conn.close()
+    return str(results)
+
+# 🔒 3. 하드코딩된 비밀번호 (Hardcoded credential)
+def check_admin_login(password):
+    if password == "Admin@123":  # CodeQL: hardcoded-credentials
+        return True
+    return False
 
 if __name__ == "__main__":
-    name = input("Enter your name: ")
-    execute_command(name)
-
-    username = input("Username: ")
-    password = input("Password: ")
-    login(username, password)
-
-    keyword = input("Search keyword: ")
-    search_user(keyword)
+    app.run(debug=True)
