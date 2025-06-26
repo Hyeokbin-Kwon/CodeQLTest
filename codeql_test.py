@@ -1,16 +1,28 @@
-def get_user_input():
-    import sqlite3
-    # 사용자 입력을 받음
+# 취약점 예시가 포함된 Python 코드 (SQL Injection, Path Traversal)
+
+import sqlite3
+import os
+
+def sql_injection_example():
+    # SQL Injection 취약점 예시
     username = input("Enter your username: ")
-    # 데이터베이스 연결
-    conn = sqlite3.connect('example.db')
+    conn = sqlite3.connect(':memory:')  # 메모리 DB 사용 (예시)
     cursor = conn.cursor()
-    # SQL Injection 가능성이 있는 쿼리
-    query = "SELECT * FROM users WHERE username = '" + username + "'"
+    cursor.execute("CREATE TABLE IF NOT EXISTS users (username TEXT)")
+    query = f"SELECT * FROM users WHERE username = '{username}'"
     cursor.execute(query)
     result = cursor.fetchall()
     conn.close()
-    return result
+    print("SQL Injection result:", result)
+
+def path_traversal_example():
+    # Path Traversal 취약점 예시
+    filename = input("Enter file name: ")
+    with open(filename, 'r') as f:
+        print("File content:", f.read())
 
 if __name__ == "__main__":
-    print(get_user_input())
+    print("1. SQL Injection Example")
+    sql_injection_example()
+    print("\n2. Path Traversal Example")
+    path_traversal_example()
